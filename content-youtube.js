@@ -1,10 +1,15 @@
 (function () {
   "use strict";
 
-  const SITE = "youtube";
-
-  const REMOVE_TARGETS = [
+  const HOME_ONLY_TARGETS = [
     { selector: "ytd-rich-grid-renderer", label: "home feed grid" },
+    { selector: "ytd-rich-shelf-renderer", label: "rich shelf" },
+    { selector: "yt-chip-cloud-renderer", label: "chips bar" },
+    { selector: "ytd-primetime-promo-renderer", label: "primetime promo" },
+    { selector: "ytd-statement-banner-renderer", label: "statement banner" },
+  ];
+
+  const GLOBAL_TARGETS = [
     {
       selector: "ytd-watch-next-secondary-results-renderer",
       label: "up next / sidebar recs",
@@ -12,37 +17,21 @@
     { selector: ".ytp-endscreen-content", label: "endscreen recommendations" },
     { selector: "ytd-rich-shelf-renderer[is-shorts]", label: "shorts shelf" },
     { selector: "ytd-reel-shelf-renderer", label: "shorts reel shelf" },
-    { selector: "ytd-rich-shelf-renderer", label: "rich shelf" },
-    { selector: "yt-chip-cloud-renderer", label: "chips bar" },
-    { selector: "ytd-primetime-promo-renderer", label: "primetime promo" },
-    { selector: "ytd-statement-banner-renderer", label: "statement banner" },
     {
       selector: ".ytp-autonav-endscreen-countdown-container",
       label: "autoplay countdown",
     },
   ];
 
-  let enabled = true;
   let bannerInjected = false;
 
-  chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.type === "toggle" && msg.site === SITE) {
-      enabled = msg.enabled;
-      if (enabled) {
-        scheduleCleanup();
-      } else {
-        location.reload();
-      }
-    }
-  });
-
-  chrome.storage.local.get({ sites: {} }, (data) => {
-    if (data.sites[SITE] === false) {
-      enabled = false;
-    } else {
-      scheduleCleanup();
-    }
-  });
+  function isHomePage() {
+    return (
+      location.pathname === "/" ||
+      location.pathname === "/feed" ||
+      location.pathname === "/feed/"
+    );
+  }
 
   function createBanner() {
     const banner = document.createElement("div");
@@ -87,9 +76,11 @@
   }
 
   function removeAlgorithmicContent() {
-    if (!enabled) return;
+    const targets = isHomePage()
+      ? [...HOME_ONLY_TARGETS, ...GLOBAL_TARGETS]
+      : GLOBAL_TARGETS;
 
-    for (const { selector } of REMOVE_TARGETS) {
+    for (const { selector } of targets) {
       document.querySelectorAll(selector).forEach((el) => {
         el.remove();
       });
@@ -97,14 +88,8 @@
   }
 
   function injectBannerIfNeeded() {
-    if (!enabled || bannerInjected) return;
-
-    const isHomePage =
-      location.pathname === "/" ||
-      location.pathname === "/feed" ||
-      location.pathname === "/feed/";
-
-    if (!isHomePage) return;
+    if (bannerInjected) return;
+    if (!isHomePage()) return;
 
     const container =
       document.querySelector("ytd-browse[page-subtype='home'] #contents") ||

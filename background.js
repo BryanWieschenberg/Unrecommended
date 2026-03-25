@@ -1,7 +1,24 @@
-// Redirect patterns per site
 const FEED_PATTERNS = [
-  { site: "linkedin", pattern: /^https:\/\/www\.linkedin\.com\/feed\/?(\?.*)?$/, redirect: "https://www.linkedin.com/mynetwork/" },
-  { site: "youtube", pattern: /^https:\/\/www\.youtube\.com\/?(\?.*)?$/, redirect: "https://www.youtube.com/feed/subscriptions" },
+  {
+    site: "linkedin",
+    pattern: /^https:\/\/www\.linkedin\.com\/feed\/(?!notifications\/)(\?.*)?$/,
+    redirect: "https://www.linkedin.com/mynetwork/",
+  },
+  {
+    site: "youtube-home",
+    pattern: /^https:\/\/www\.youtube\.com\/?(\?.*)?$/,
+    redirect: "https://www.youtube.com/feed/subscriptions",
+  },
+  {
+    site: "youtube-shorts",
+    pattern: /^https:\/\/www\.youtube\.com\/shorts(\/.*)?(\?.*)?$/,
+    redirect: "https://www.youtube.com/feed/subscriptions",
+  },
+  {
+    site: "instagram",
+    pattern: /^https:\/\/www\.instagram\.com\/reels?\/?(\?.*)?$/,
+    redirect: "https://www.instagram.com/",
+  },
 ];
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
@@ -19,15 +36,10 @@ chrome.tabs.onActivated.addListener(({ tabId }) => {
 });
 
 function checkAndRedirect(tabId, url) {
-  chrome.storage.local.get({ sites: {} }, (data) => {
-    for (const { site, pattern, redirect } of FEED_PATTERNS) {
-      // Skip if this site is explicitly disabled
-      if (data.sites[site] === false) continue;
-
-      if (pattern.test(url)) {
-        chrome.tabs.update(tabId, { url: redirect });
-        return;
-      }
+  for (const { pattern, redirect } of FEED_PATTERNS) {
+    if (pattern.test(url)) {
+      chrome.tabs.update(tabId, { url: redirect });
+      return;
     }
-  });
+  }
 }

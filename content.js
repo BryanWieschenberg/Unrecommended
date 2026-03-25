@@ -1,8 +1,6 @@
 (function () {
   "use strict";
 
-  const SITE = "linkedin";
-
   const REMOVE_TARGETS = [
     {
       selector: "main [data-finite-scroll-hotkey-context]",
@@ -43,28 +41,7 @@
     },
   ];
 
-  let enabled = true;
   let bannerInjected = false;
-
-  chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.type === "toggle" && msg.site === SITE) {
-      enabled = msg.enabled;
-      if (enabled) {
-        scheduleCleanup();
-      } else {
-        location.reload();
-      }
-    }
-  });
-
-  // Check initial state
-  chrome.storage.local.get({ sites: {} }, (data) => {
-    if (data.sites[SITE] === false) {
-      enabled = false;
-    } else {
-      scheduleCleanup();
-    }
-  });
 
   function createBanner() {
     const banner = document.createElement("div");
@@ -109,8 +86,6 @@
   }
 
   function removeAlgorithmicContent() {
-    if (!enabled) return;
-
     for (const { selector } of REMOVE_TARGETS) {
       document.querySelectorAll(selector).forEach((el) => {
         el.remove();
@@ -119,7 +94,7 @@
   }
 
   function injectBannerIfNeeded() {
-    if (!enabled || bannerInjected) return;
+    if (bannerInjected) return;
 
     const isFeedPage =
       location.pathname === "/" || location.pathname.startsWith("/feed");
