@@ -4,6 +4,7 @@ const DEFAULTS = {
   darkmode_gslides: false,
   darkmode_canvas: false,
   darkmode_youtube: false,
+  darkmode_pdf: false,
   invert_colors: false,
 };
 
@@ -251,3 +252,75 @@ whitelistUrlInput.addEventListener("keydown", (e) => {
 });
 
 loadWhitelist();
+
+// --- Invert Colors Whitelist ---
+const invertWlInput = document.getElementById("invert-wl-input");
+const invertWlAddBtn = document.getElementById("invert-wl-add-btn");
+const invertWlList = document.getElementById("invert-wl-list");
+const invertWlEmpty = document.getElementById("invert-wl-empty");
+
+function renderInvertWhitelist(domains) {
+  invertWlList.querySelectorAll(".whitelist-item").forEach((el) => el.remove());
+  invertWlEmpty.style.display = domains.length ? "none" : "";
+
+  for (const domain of domains) {
+    const item = document.createElement("div");
+    item.className = "whitelist-item";
+
+    const label = document.createElement("span");
+    label.className = "wl-label";
+    label.textContent = domain;
+    label.style.color = "#555";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "wl-remove";
+    removeBtn.textContent = "\u00d7";
+    removeBtn.addEventListener("click", () => removeInvertWlEntry(domain));
+
+    item.appendChild(label);
+    item.appendChild(removeBtn);
+    invertWlList.appendChild(item);
+  }
+}
+
+function loadInvertWhitelist() {
+  chrome.storage.sync.get({ invert_whitelist: [] }, (data) => {
+    renderInvertWhitelist(data.invert_whitelist);
+  });
+}
+
+function removeInvertWlEntry(domain) {
+  chrome.storage.sync.get({ invert_whitelist: [] }, (data) => {
+    const updated = data.invert_whitelist.filter((d) => d !== domain);
+    chrome.storage.sync.set({ invert_whitelist: updated }, () => {
+      renderInvertWhitelist(updated);
+    });
+  });
+}
+
+invertWlAddBtn.addEventListener("click", () => {
+  const raw = invertWlInput.value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  if (!raw || !raw.includes(".")) {
+    invertWlInput.style.borderColor = "#d32f2f";
+    setTimeout(() => (invertWlInput.style.borderColor = ""), 1500);
+    return;
+  }
+
+  chrome.storage.sync.get({ invert_whitelist: [] }, (data) => {
+    if (data.invert_whitelist.includes(raw)) {
+      invertWlInput.value = "";
+      return;
+    }
+    const updated = [...data.invert_whitelist, raw];
+    chrome.storage.sync.set({ invert_whitelist: updated }, () => {
+      invertWlInput.value = "";
+      renderInvertWhitelist(updated);
+    });
+  });
+});
+
+invertWlInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") invertWlAddBtn.click();
+});
+
+loadInvertWhitelist();

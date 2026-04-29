@@ -170,3 +170,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     chrome.storage.sync.set({ lockdown_mode: false, lockdown_until: 0 });
   }
 });
+
+chrome.tabs.onZoomChange.addListener(({ tabId, newZoomFactor }) => {
+  chrome.tabs.sendMessage(tabId, {
+    type: "zoom_changed",
+    zoomFactor: newZoomFactor,
+  }).catch(() => {});
+});

@@ -12,6 +12,7 @@
 
   const host = location.hostname;
   if (SKIP_DOMAINS.some((d) => host === d || host.endsWith("." + d))) return;
+  if (location.pathname.toLowerCase().endsWith(".pdf")) return;
 
   const INVERT_CSS = `
     html {
@@ -38,13 +39,29 @@
   `;
 
   let enabled = false;
+  let whitelisted = false;
+
+  function isWhitelisted(domains) {
+    return domains.some((d) => host === d || host.endsWith("." + d));
+  }
+
+  const earlyStyle = document.createElement("style");
+  earlyStyle.id = STYLE_ID;
+  earlyStyle.textContent =
+    INVERT_CSS +
+    `
+    html { visibility: hidden !important; }
+  `;
+  (document.head || document.documentElement).appendChild(earlyStyle);
 
   function injectInvert() {
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
+    let style = document.getElementById(STYLE_ID);
+    if (!style) {
+      style = document.createElement("style");
+      style.id = STYLE_ID;
+      (document.head || document.documentElement).appendChild(style);
+    }
     style.textContent = INVERT_CSS;
-    (document.head || document.documentElement).appendChild(style);
   }
 
   function removeInvert() {
@@ -53,7 +70,7 @@
   }
 
   function apply() {
-    if (enabled) {
+    if (enabled && !whitelisted) {
       injectInvert();
     } else {
       removeInvert();
@@ -67,16 +84,20 @@
     }
   });
 
+  chrome.storage.onChanged.addListener((changes) => {
+    if (changes.invert_whitelist) {
+      whitelisted = isWhitelisted(changes.invert_whitelist.newValue || []);
+      apply();
+    }
+  });
+
   function init() {
-    chrome.storage.sync.get({ [TOOL_KEY]: false }, (settings) => {
+    chrome.storage.sync.get({ [TOOL_KEY]: false, invert_whitelist: [] }, (settings) => {
       enabled = settings[TOOL_KEY];
+      whitelisted = isWhitelisted(settings.invert_whitelist);
       apply();
     });
   }
 
-  if (document.head) {
-    init();
-  } else {
-    document.addEventListener("DOMContentLoaded", init);
-  }
+  init();
 })();

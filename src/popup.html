@@ -259,6 +259,9 @@
       .tool-icon.canvas {
         background: #e03c31;
       }
+      .tool-icon.pdf {
+        background: #ea4335;
+      }
       .tool-icon.invert {
         background: #555;
       }
@@ -422,6 +425,17 @@
 
       <div class="tool-row">
         <div class="tool-info">
+          <div class="tool-icon pdf">PDF</div>
+          <span class="tool-name">PDF</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" data-tool="darkmode_pdf" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="tool-row">
+        <div class="tool-info">
           <div class="tool-icon invert">INV</div>
           <span class="tool-name">Invert Colors</span>
         </div>
@@ -429,6 +443,17 @@
           <input type="checkbox" data-tool="invert_colors" />
           <span class="slider"></span>
         </label>
+      </div>
+    </div>
+
+    <div class="section whitelist-section">
+      <div class="section-title">Invert Whitelist</div>
+      <div class="whitelist-add">
+        <input type="text" id="invert-wl-input" placeholder="e.g. github.com" />
+        <button id="invert-wl-add-btn">Add</button>
+      </div>
+      <div class="whitelist-list" id="invert-wl-list">
+        <div class="whitelist-empty" id="invert-wl-empty">No whitelisted domains</div>
       </div>
     </div>
 

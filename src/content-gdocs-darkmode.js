@@ -47,12 +47,23 @@
 
   let enabled = false;
 
+  const earlyStyle = document.createElement("style");
+  earlyStyle.id = STYLE_ID;
+  earlyStyle.textContent =
+    DARK_CSS +
+    `
+    html { visibility: hidden !important; }
+  `;
+  (document.head || document.documentElement).appendChild(earlyStyle);
+
   function injectDarkMode() {
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
+    let style = document.getElementById(STYLE_ID);
+    if (!style) {
+      style = document.createElement("style");
+      style.id = STYLE_ID;
+      (document.head || document.documentElement).appendChild(style);
+    }
     style.textContent = DARK_CSS;
-    (document.head || document.documentElement).appendChild(style);
   }
 
   function removeDarkMode() {
@@ -82,9 +93,5 @@
     });
   }
 
-  if (document.head) {
-    init();
-  } else {
-    document.addEventListener("DOMContentLoaded", init);
-  }
+  init();
 })();

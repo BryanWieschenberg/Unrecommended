@@ -66,6 +66,11 @@
       "matches": ["http://*/*", "https://*/*"],
       "js": ["src/content-invert.js"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["http://*/*", "https://*/*", "file:///*"],
+      "js": ["src/content-pdf-darkmode.js"],
+      "run_at": "document_start"
     }
   ],
   "icons": {
