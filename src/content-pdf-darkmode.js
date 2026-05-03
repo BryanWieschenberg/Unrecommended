@@ -9,9 +9,11 @@
   const HIDE_ID = "browser-tools-pdf-darkmode-hide";
   const FILTER_ID = "browser-tools-pdf-darkmode-filter";
   const TOOLBAR_HEIGHT = 56;
-  const PDF_ASPECT = 0.57;
+  const DEFAULT_PDF_ASPECT = 0.71;
   const SIDE_OFFSET = 8;
   const SIDE_BG = "#1e1e1e";
+
+  let pdfAspect = DEFAULT_PDF_ASPECT;
 
   const DARK_CSS = `
     html {
@@ -25,7 +27,7 @@
   function getSideMargin() {
     const vw = window.innerWidth;
     const vh = Math.max(0, window.innerHeight - TOOLBAR_HEIGHT);
-    const pdfW = vh * PDF_ASPECT * zoomFactor;
+    const pdfW = vh * pdfAspect * zoomFactor;
     return Math.max(0, Math.floor((vw - pdfW) / 2));
   }
 
@@ -133,14 +135,22 @@
       zoomFactor = msg.zoomFactor;
       scheduleSvgUpdate();
     }
+    if (msg.type === "pdf_aspect_changed") {
+      pdfAspect = Number(msg.value) || DEFAULT_PDF_ASPECT;
+      scheduleSvgUpdate();
+    }
   });
 
   function init() {
-    chrome.storage.sync.get({ [TOOL_KEY]: false }, (settings) => {
-      enabled = settings[TOOL_KEY];
-      apply();
-      reveal();
-    });
+    chrome.storage.sync.get(
+      { [TOOL_KEY]: false, darkmode_pdf_aspect: DEFAULT_PDF_ASPECT },
+      (settings) => {
+        enabled = settings[TOOL_KEY];
+        pdfAspect = Number(settings.darkmode_pdf_aspect) || DEFAULT_PDF_ASPECT;
+        apply();
+        reveal();
+      }
+    );
   }
 
   if (document.body) {

@@ -1,3 +1,33 @@
+const DEFAULT_PDF_ASPECT = 0.71;
+const DEFAULT_TAB = "darkmode";
+
+// --- Tabs ---
+const tabButtons = document.querySelectorAll(".tab");
+const tabPanels = document.querySelectorAll(".tab-panel");
+
+function setActiveTab(name) {
+  tabButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.tab === name);
+  });
+  tabPanels.forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.panel === name);
+  });
+  chrome.storage.sync.set({ popup_active_tab: name });
+}
+
+tabButtons.forEach((btn) => {
+  btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
+});
+
+chrome.storage.sync.get(
+  { popup_active_tab: DEFAULT_TAB, lockdown_mode: false, lockdown_until: 0 },
+  (data) => {
+    const lockdownActive =
+      data.lockdown_mode && data.lockdown_until > Date.now();
+    setActiveTab(lockdownActive ? "lockdown" : data.popup_active_tab || DEFAULT_TAB);
+  }
+);
+
 const DEFAULTS = {
   darkmode_gdocs: false,
   darkmode_gsheets: false,
@@ -5,6 +35,7 @@ const DEFAULTS = {
   darkmode_canvas: false,
   darkmode_youtube: false,
   darkmode_pdf: false,
+  darkmode_pdf_aspect: DEFAULT_PDF_ASPECT,
   invert_colors: false,
 };
 
@@ -38,6 +69,55 @@ toggles.forEach((input) => {
       enabled: value,
     });
   });
+});
+
+// --- PDF darkmode side width ---
+const pdfAspectSlider = document.getElementById("pdf-aspect");
+const pdfAspectValue = document.getElementById("pdf-aspect-value");
+
+function renderPdfAspect(value) {
+  pdfAspectSlider.value = String(value);
+  pdfAspectValue.textContent = Number(value).toFixed(2);
+}
+
+chrome.storage.sync.get({ darkmode_pdf_aspect: DEFAULT_PDF_ASPECT }, (data) => {
+  renderPdfAspect(data.darkmode_pdf_aspect);
+});
+
+pdfAspectSlider.addEventListener("input", () => {
+  const value = Number(pdfAspectSlider.value);
+  pdfAspectValue.textContent = value.toFixed(2);
+  chrome.runtime.sendMessage({ type: "pdf_aspect_changed", value });
+});
+
+pdfAspectSlider.addEventListener("change", () => {
+  const value = Number(pdfAspectSlider.value);
+  chrome.storage.sync.set({ darkmode_pdf_aspect: value });
+});
+
+// --- Audio amplification ---
+const audioAmpSlider = document.getElementById("audio-amp");
+const audioAmpValue = document.getElementById("audio-amp-value");
+
+function renderAudioAmp(value) {
+  const v = Number(value) || 1;
+  audioAmpSlider.value = String(v);
+  audioAmpValue.textContent = v.toFixed(1) + "x";
+}
+
+chrome.storage.sync.get({ audio_amp_gain: 1 }, (data) => {
+  renderAudioAmp(data.audio_amp_gain);
+});
+
+audioAmpSlider.addEventListener("input", () => {
+  const value = Number(audioAmpSlider.value);
+  audioAmpValue.textContent = value.toFixed(1) + "x";
+  chrome.runtime.sendMessage({ type: "audio_amp_changed", value });
+});
+
+audioAmpSlider.addEventListener("change", () => {
+  const value = Number(audioAmpSlider.value);
+  chrome.storage.sync.set({ audio_amp_gain: value });
 });
 
 // --- Lockdown mode ---

@@ -71,6 +71,16 @@
       "matches": ["http://*/*", "https://*/*", "file:///*"],
       "js": ["src/content-pdf-darkmode.js"],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://*.youtube.com/*",
+        "https://*.zoom.us/*",
+        "https://*.teams.microsoft.com/*",
+        "https://*.teams.live.com/*"
+      ],
+      "js": ["src/content-audio-amp.js"],
+      "run_at": "document_idle"
     }
   ],
   "icons": {

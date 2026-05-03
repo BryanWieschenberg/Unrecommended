@@ -128,6 +128,16 @@ function checkAndRedirect(tabId, url) {
 }
 
 chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === "pdf_aspect_changed" || msg.type === "audio_amp_changed") {
+    chrome.tabs.query({}, (tabs) => {
+      for (const tab of tabs) {
+        if (!tab.id || !tab.url) continue;
+        chrome.tabs.sendMessage(tab.id, msg).catch(() => {});
+      }
+    });
+    return;
+  }
+
   if (msg.type !== "tool_toggled") return;
 
   if (msg.tool === "lockdown_mode" && msg.enabled) {
